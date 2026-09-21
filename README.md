@@ -43,9 +43,16 @@ the conversion hotkey itself.
 For a selection the clipboard is unavoidable — there is no other way to read selected text in
 a foreign application. KeyFlip remembers the current clipboard text, sends `Ctrl+C`, waits for
 `GetClipboardSequenceNumber` to change (up to 250 ms), converts the text and **types it
-directly** over the selection, then restores the previous clipboard content. Its own temporary
-entries are marked with the `CanIncludeInClipboardHistory` / `CanUploadToCloudClipboard`
-formats, so they never show up in `Win+V` or the cloud clipboard.
+directly** over the selection, then restores the previous clipboard content — but only if
+nothing else wrote to the clipboard in the meantime.
+
+The copy itself is made by the focused application, so the selected text lands on the clipboard
+as an ordinary entry: with clipboard history or the cloud clipboard on, it shows up in `Win+V`
+and syncs like anything else you copy. KeyFlip cannot mark someone else's copy, and restoring
+the previous content afterwards does not remove what history has already recorded. Only
+KeyFlip's own write — the restore — is marked with the `CanIncludeInClipboardHistory` /
+`CanUploadToCloudClipboard` formats and stays out of both. For passwords and anything else
+worth keeping out of `Win+V`, use the last-word path, which never touches the clipboard.
 
 ### 3. Tray icon
 
@@ -62,8 +69,19 @@ no restart. "About" shows the version, a short key reference and a link to the s
 
 ## Install
 
-Run **`install.cmd`** (double click, or `install.cmd /s` for a silent install). No admin
-rights needed — everything goes into the current user's profile.
+Download `KeyFlip.exe` from the [latest release](https://github.com/stepev/keyflip/releases/latest)
+and run it with `--install`, or double-click it to just try it out without installing anything.
+Alternatively, clone the repository and run **`install.cmd`** (or `install.cmd /s` for a silent
+install) — it builds the app first. No admin rights are needed either way: everything goes into
+the current user's profile.
+
+> **Windows will warn you about the file.** KeyFlip is not signed with a code-signing
+> certificate, so SmartScreen shows "Windows protected your PC" — click *More info* →
+> *Run anyway*. If Smart App Control is enabled on your machine, it blocks unsigned programs
+> outright; there is no way around that except turning it off (which is irreversible) or
+> building the app yourself from source. Every release lists the SHA-256 of the executable so
+> you can verify what you downloaded:
+> `Get-FileHash .\KeyFlip.exe -Algorithm SHA256`.
 
 The script builds the app if needed and then:
 
