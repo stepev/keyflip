@@ -19,7 +19,7 @@ namespace KeyFlip
             MaximizeBox = false;
             MinimizeBox = false;
             ShowInTaskbar = false;
-            ClientSize = new Size(440, 316);
+            ClientSize = new Size(440, 306);
             Font = new Font("Segoe UI", 9f);
             BackColor = Color.White;
 
@@ -66,22 +66,9 @@ namespace KeyFlip
             link.SetBounds(20, 238, 400, 18);
             link.LinkClicked += delegate { Open(ProjectUrl); };
 
-            Button settings = new Button();
-            settings.Text = Strings.AboutSettingsFolder;
-            settings.SetBounds(20, 274, 150, 28);
-            settings.Click += delegate
-            {
-                try
-                {
-                    Directory.CreateDirectory(Config.Dir);
-                    Open(Config.Dir);
-                }
-                catch { }
-            };
-
             Button close = new Button();
             close.Text = Strings.ButtonClose;
-            close.SetBounds(340, 274, 80, 28);
+            close.SetBounds(340, 264, 80, 28);
             close.Click += delegate { Close(); };
 
             AcceptButton = close;
@@ -94,7 +81,6 @@ namespace KeyFlip
             Controls.Add(keys);
             Controls.Add(license);
             Controls.Add(link);
-            Controls.Add(settings);
             Controls.Add(close);
         }
 

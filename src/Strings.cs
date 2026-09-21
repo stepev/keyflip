@@ -72,6 +72,14 @@ namespace KeyFlip
         public static string LanguageEn { get { return "English"; } }
 
         public static string MenuSettingsFile { get { return S("Открыть файл настроек", "Open settings file"); } }
+        public static string OpenSettingsFailed(string path, string error)
+        {
+            return S("Не удалось открыть файл настроек:" + NL + path + NL + NL + error,
+                     "Could not open the settings file:" + NL + path + NL + NL + error);
+        }
+
+        private static string NL { get { return Environment.NewLine; } }
+
         public static string MenuAbout { get { return S("О программе", "About"); } }
         public static string MenuExit { get { return S("Выход", "Exit"); } }
 
@@ -176,7 +184,6 @@ namespace KeyFlip
         public static string AboutHotkey { get { return S("перекодировать выделение или последнее слово", "convert the selection or the last word"); } }
         public static string AboutTray { get { return S("флаг языка в трее; правый клик — настройки", "language flag in the tray; right-click for settings"); } }
         public static string AboutLicense { get { return S("Свободное ПО, лицензия MIT", "Free software under the MIT license"); } }
-        public static string AboutSettingsFolder { get { return S("Папка настроек", "Settings folder"); } }
         public static string AboutVersion(string version) { return S("Версия ", "Version ") + version; }
     }
 }
