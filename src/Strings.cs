@@ -71,15 +71,6 @@ namespace KeyFlip
         public static string LanguageRu { get { return "Русский"; } }
         public static string LanguageEn { get { return "English"; } }
 
-        public static string MenuSettingsFile { get { return S("Открыть файл настроек", "Open settings file"); } }
-        public static string OpenSettingsFailed(string path, string error)
-        {
-            return S("Не удалось открыть файл настроек:" + NL + path + NL + NL + error,
-                     "Could not open the settings file:" + NL + path + NL + NL + error);
-        }
-
-        private static string NL { get { return Environment.NewLine; } }
-
         public static string MenuAbout { get { return S("О программе", "About"); } }
         public static string MenuExit { get { return S("Выход", "Exit"); } }
 

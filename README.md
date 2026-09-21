@@ -106,8 +106,9 @@ Result: `bin\KeyFlip.exe`, a single ~100 KB file. The application icon is genera
 
 ## Settings
 
-`%LOCALAPPDATA%\KeyFlip\config.ini` (menu → "Open settings file"). Menu changes are written
-there too; manual edits are picked up on the next start.
+Everything is configurable from the tray menu. The same values are stored in
+`%LOCALAPPDATA%\KeyFlip\config.ini`, which you can edit by hand — changes are picked up
+on the next start.
 
 ```ini
 enabled=1                      # 1/0 — is Ctrl switching active

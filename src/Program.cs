@@ -326,47 +326,6 @@ namespace KeyFlip
         }
     }
 
-    /// <summary>Открытие файла настроек в редакторе.</summary>
-    internal static class SettingsFile
-    {
-        /// <summary>
-        /// Открывает config.ini. Рабочая директория задаётся явно: у автозапущенной копии
-        /// она может указывать на уже удалённую папку, и тогда запуск падает с
-        /// "The system cannot find the path specified".
-        /// </summary>
-        public static bool Open(Config cfg, out string error)
-        {
-            error = null;
-            try
-            {
-                Directory.CreateDirectory(Config.Dir);
-                if (!File.Exists(Config.FilePath) && cfg != null) cfg.Save();
-
-                ProcessStartInfo psi = new ProcessStartInfo();
-                string notepad = Path.Combine(Environment.SystemDirectory, "notepad.exe");
-                if (File.Exists(notepad))
-                {
-                    psi.FileName = notepad;
-                    psi.Arguments = "\"" + Config.FilePath + "\"";
-                }
-                else
-                {
-                    psi.FileName = Config.FilePath; // откроется программой по умолчанию
-                }
-                psi.WorkingDirectory = Config.Dir;
-                psi.UseShellExecute = true;
-                Process.Start(psi);
-                return true;
-            }
-            catch (Exception ex)
-            {
-                error = ex.Message;
-                Log.Write("не удалось открыть настройки: " + ex.Message);
-                return false;
-            }
-        }
-    }
-
     internal static class Autostart
     {
         private const string RunKey = @"Software\Microsoft\Windows\CurrentVersion\Run";
@@ -1349,17 +1308,6 @@ namespace KeyFlip
             language.DropDownItems.Add(LanguageItem(Strings.LanguageRu, "ru"));
             language.DropDownItems.Add(LanguageItem(Strings.LanguageEn, "en"));
 
-            ToolStripMenuItem settings = new ToolStripMenuItem(Strings.MenuSettingsFile);
-            settings.Click += delegate
-            {
-                string error;
-                if (!SettingsFile.Open(_cfg, out error))
-                {
-                    MessageBox.Show(Strings.OpenSettingsFailed(Config.FilePath, error),
-                        "KeyFlip", MessageBoxButtons.OK, MessageBoxIcon.Warning);
-                }
-            };
-
             ToolStripMenuItem about = new ToolStripMenuItem(Strings.MenuAbout);
             about.Click += delegate
             {
@@ -1378,7 +1326,6 @@ namespace KeyFlip
             menu.Items.Add(autostart);
             menu.Items.Add(language);
             menu.Items.Add(new ToolStripSeparator());
-            menu.Items.Add(settings);
             menu.Items.Add(about);
             menu.Items.Add(exit);
 
