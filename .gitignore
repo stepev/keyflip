@@ -1,0 +1,13 @@
+# Сборка
+bin/
+obj/
+
+# Сгенерированные ресурсы (создаются tools/make-icon.ps1 при сборке)
+assets/app.ico
+
+# Локальные файлы редакторов и системы
+.vs/
+*.user
+*.suo
+Thumbs.db
+desktop.ini
