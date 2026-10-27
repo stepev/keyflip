@@ -203,6 +203,25 @@ namespace KeyFlip
         [DllImport("user32.dll")]
         public static extern uint GetClipboardSequenceNumber();
 
+        [StructLayout(LayoutKind.Sequential)]
+        public struct LASTINPUTINFO
+        {
+            public uint cbSize;
+            public uint dwTime;
+        }
+
+        [DllImport("user32.dll")]
+        public static extern bool GetLastInputInfo(ref LASTINPUTINFO plii);
+
+        /// <summary>Момент последнего ввода в сессии (в единицах Environment.TickCount).</summary>
+        public static int LastInputTick()
+        {
+            LASTINPUTINFO lii = new LASTINPUTINFO();
+            lii.cbSize = (uint)Marshal.SizeOf(typeof(LASTINPUTINFO));
+            if (!GetLastInputInfo(ref lii)) return Environment.TickCount;
+            return unchecked((int)lii.dwTime);
+        }
+
         public static bool IsDown(int vk)
         {
             return (GetAsyncKeyState(vk) & 0x8000) != 0;
@@ -463,6 +482,8 @@ namespace KeyFlip
         private IntPtr _msHook = IntPtr.Zero;
         private Native.HookProc _kbProc;
         private Native.HookProc _msProc;
+        private int _lastHookTick;        // когда хук в последний раз получал событие
+        private int _lastReinstallTick;
 
         // Состояние отслеживания одиночного Ctrl
         private bool _ctrlDown;
@@ -531,11 +552,12 @@ namespace KeyFlip
                     _lastForeground = fg;
                     _typed.Clear(); // сменилось окно — журнал набранного больше не относится к делу
                 }
+                CheckHooksAlive();
                 UpdateIcon(false);
             };
             _timer.Start();
 
-            InstallHooks();
+            InstallHooks(true);
 
             if (firstRun)
             {
@@ -551,18 +573,54 @@ namespace KeyFlip
 
         // ---------- хуки ----------
 
-        private void InstallHooks()
+        private void InstallHooks(bool showError)
         {
             _kbProc = KeyboardProc;
             _msProc = MouseProc;
             IntPtr hMod = Native.GetModuleHandle(Process.GetCurrentProcess().MainModule.ModuleName);
             _kbHook = Native.SetWindowsHookEx(Native.WH_KEYBOARD_LL, _kbProc, hMod, 0);
+            int kbError = Marshal.GetLastWin32Error();
             _msHook = Native.SetWindowsHookEx(Native.WH_MOUSE_LL, _msProc, hMod, 0);
-            if (_kbHook == IntPtr.Zero)
+            _lastHookTick = Environment.TickCount;
+            Log.Write("хуки: клавиатура " + (_kbHook != IntPtr.Zero ? "ок" : "ОШИБКА " + kbError)
+                      + ", мышь " + (_msHook != IntPtr.Zero ? "ок" : "ОШИБКА"));
+            if (_kbHook == IntPtr.Zero && showError)
             {
-                MessageBox.Show(Strings.HookFailed(Marshal.GetLastWin32Error()),
+                MessageBox.Show(Strings.HookFailed(kbError),
                     "KeyFlip", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
+        }
+
+        /// <summary>
+        /// Windows молча снимает низкоуровневый хук, если обработчик не уложился в
+        /// LowLevelHooksTimeout (поток подвис, процесс выгружен в своп, выход из сна).
+        /// Уведомления нет — замечаем по тому, что ввод в системе был, а до нас не дошёл.
+        /// </summary>
+        private void CheckHooksAlive()
+        {
+            int now = Environment.TickCount;
+            int lastInput = Native.LastInputTick();
+            if (unchecked(lastInput - _lastHookTick) < 2000) return;
+            if (unchecked(now - _lastReinstallTick) < 10000) return;
+            _lastReinstallTick = now;
+
+            Log.Write("хуки не получают ввод " + unchecked(lastInput - _lastHookTick)
+                      + " мс (окно: " + ForegroundProcessName() + ") — переустанавливаем");
+            RemoveHooks();
+            InstallHooks(false);
+            _ctrlDown = false;
+            _dirty = false;
+        }
+
+        private static string ForegroundProcessName()
+        {
+            try
+            {
+                uint pid;
+                Native.GetWindowThreadProcessId(Native.GetForegroundWindow(), out pid);
+                using (Process p = Process.GetProcessById((int)pid)) return p.ProcessName;
+            }
+            catch { return "?"; }
         }
 
         private void RemoveHooks()
@@ -573,6 +631,7 @@ namespace KeyFlip
 
         private IntPtr KeyboardProc(int nCode, IntPtr wParam, IntPtr lParam)
         {
+            _lastHookTick = Environment.TickCount;
             if (nCode >= 0)
             {
                 try
@@ -588,6 +647,7 @@ namespace KeyFlip
 
         private IntPtr MouseProc(int nCode, IntPtr wParam, IntPtr lParam)
         {
+            _lastHookTick = Environment.TickCount;
             if (nCode >= 0)
             {
                 int msg = wParam.ToInt32();
